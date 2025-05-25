@@ -22,6 +22,55 @@ public static class TaskEndpoints
             return Results.Ok(users);
         });
 
+        group.MapPost("/", async ([FromBody] Models.Task task, AppDbContext db) =>
+        {
+           
+            db.Tasks.Add(task);
+            await db.SaveChangesAsync();
+            return Results.Ok("Task Created");
+        });
+
+        group.MapPut("/{id}", async (int id, [FromBody] TaskDto updatedTask, AppDbContext db) =>
+        {
+            var task = await db.Tasks.FindAsync(id);
+            if (task is null)
+                return Results.NotFound("Task not found");
+
+            if (!string.IsNullOrEmpty(updatedTask.Title))
+                task.Title = updatedTask.Title;
+
+            if (!string.IsNullOrEmpty(updatedTask.Status))
+                task.Status = updatedTask.Status;
+
+            if (!string.IsNullOrEmpty(updatedTask.Priority))
+                task.Priority = updatedTask.Priority;
+
+            if (updatedTask.AssignedToId.HasValue)
+                task.AssignedToId = updatedTask.AssignedToId.Value;
+
+            if (updatedTask.DueDate.HasValue)
+                task.DueDate = updatedTask.DueDate.Value;
+
+            task.UpdatedAt = DateTime.UtcNow;
+
+            await db.SaveChangesAsync();
+            return Results.Ok("Task updated successfully");
+        });
+
+        group.MapDelete("/{id}", async (int id, AppDbContext db) =>
+        {
+            var task = await db.Tasks.FindAsync(id);
+            if (task is null)
+                return Results.NotFound("Task not found");
+
+            db.Tasks.Remove(task);
+            await db.SaveChangesAsync();
+            return Results.Ok("Task deleted successfully");
+        });
+
+
+
+
         return group;
     }
 }
