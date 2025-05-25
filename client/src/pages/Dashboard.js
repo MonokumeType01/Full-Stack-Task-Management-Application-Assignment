@@ -11,34 +11,18 @@ export default function Dashboard() {
   const [mode, setMode] = useState("");
 
 
-  const handleCreate = () => {
-    setMode("create");
-    setSelectedTask(null);
-    setModalOpen(true);
-  };
-
-  const handleViewTask = (task) => {
-    setMode("view");
-    setSelectedTask(task);
-    setModalOpen(true);
+  const handleTaskType = (modeType) => {
+    if (modeType!="delete"){
+      setMode(modeType);
+      setSelectedTask(null);
+      setModalOpen(true);
+    }
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
     setSelectedTask(null);
   };
-
-  const handleEditTask = (task) => {
-    setMode("edit");
-    setSelectedTask(task);
-    setModalOpen(true);
-  };
-
-  const handleDeleteTask = (task) => {
-    setSelectedTask(task);
-    setModalOpen(true);
-  };
-
 
   const handleSaveTask = (taskData) => {
     if (taskData.id) {
@@ -90,9 +74,8 @@ export default function Dashboard() {
       <div className="bg-white rounded-2xl shadow-md p-4">
         <TaskTable 
         tasks={tasks} 
-        onViewTask={handleViewTask} 
-        onEditTask={handleEditTask} 
-        onDeleteTask={handleDeleteTask} 
+       
+        onTaskSelected={handleTaskType}
         />
       </div>
 
@@ -101,10 +84,7 @@ export default function Dashboard() {
           isOpen={modalOpen}
           onClose={handleCloseModal}
           task={selectedTask}
-          onViewTask={handleViewTask}
-          onEditTask={handleEditTask}
           onSaveTask={handleSaveTask}
-          onCreateTask={handleCreate}
           mode={mode}
         />
        )}

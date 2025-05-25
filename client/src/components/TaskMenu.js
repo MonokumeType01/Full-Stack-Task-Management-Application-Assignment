@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 
-export default function TaskMenu({ task, onViewTask, onEditTask, onDeleteTask }) {
+export default function TaskMenu({ task, onTaskSelected }) {
   const [showMenu, setShowMenu] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const buttonRef = useRef(null);
@@ -47,7 +47,7 @@ export default function TaskMenu({ task, onViewTask, onEditTask, onDeleteTask })
           >
             <button
               onClick={() => {
-                onEditTask(task);
+                onTaskSelected("edit");
                 setShowMenu(false);
               }}
               className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
@@ -56,7 +56,7 @@ export default function TaskMenu({ task, onViewTask, onEditTask, onDeleteTask })
             </button>
             <button
               onClick={() => {
-                onDeleteTask(task);
+                onTaskSelected("delete");
                 setShowMenu(false);
               }}
               className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded"
@@ -65,7 +65,7 @@ export default function TaskMenu({ task, onViewTask, onEditTask, onDeleteTask })
             </button>
             <button
               onClick={() => {
-                onViewTask(task);
+                onTaskSelected("view");
                 setShowMenu(false);
               }}
               className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"

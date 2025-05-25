@@ -1,6 +1,6 @@
 import TaskRow from './TaskRow';
 
-export default function TaskTable({ tasks, onViewTask, onEditTask, onDeleteTask  }) {
+export default function TaskTable({ tasks, onTaskSelected  }) {
 
   return (
     <div>
@@ -23,9 +23,7 @@ export default function TaskTable({ tasks, onViewTask, onEditTask, onDeleteTask 
               <TaskRow 
                 key={idx} 
                 task={task} 
-                onViewTask={onViewTask} 
-                onEditTask={onEditTask}
-                onDeleteTask={onDeleteTask}/>
+                onTaskSelected={onTaskSelected}/>
             ))}
           </tbody>
         </table>
