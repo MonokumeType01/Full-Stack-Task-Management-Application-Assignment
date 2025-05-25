@@ -14,7 +14,7 @@ namespace TaskManagementApp.Models
         public int? Duration { get; set; }
 
         [ForeignKey("TaskId")]
-        public int TaskId { get; set; }
+        public Guid TaskId { get; set; }
         public Task? Task { get; set; }
     }
 }

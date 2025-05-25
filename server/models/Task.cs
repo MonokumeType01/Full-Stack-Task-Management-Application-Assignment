@@ -6,7 +6,7 @@ namespace TaskManagementApp.Models
     public class Task
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Status { get; set; } = "Pending";  // Pending, In Progress, Completed
@@ -19,7 +19,7 @@ namespace TaskManagementApp.Models
         public User CreatedBy { get; set; } = null!;
 
         [ForeignKey("AssignedToId")]
-        public int? AssignedToId { get; set; }
+        public Guid? AssignedToId { get; set; }
 
         public User? AssignedTo { get; set; }
 
