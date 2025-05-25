@@ -12,7 +12,7 @@ public static class AuthEndpoints
 {
     public static RouteGroupBuilder MapAuthEndpoints(this RouteGroupBuilder group, IConfiguration config, SymmetricSecurityKey key)
     {
-        group.MapPost("/register", async ([FromBody] User user, AppDbContext db) =>
+        group.MapPost("/register", async ([FromBody] Models.User user, AppDbContext db) =>
         {
             if (await db.Users.AnyAsync(u => u.Username == user.Username))
                 return Results.BadRequest("User already exists");
@@ -22,7 +22,7 @@ public static class AuthEndpoints
             return Results.Ok("User registered");
         });
 
-        group.MapPost("/login", async ([FromBody] User user, AppDbContext db) =>
+        group.MapPost("/login", async ([FromBody] Models.User user, AppDbContext db) =>
         {
             var foundUser = await db.Users
                 .FirstOrDefaultAsync(u => u.Username == user.Username && u.Password == user.Password);
