@@ -25,7 +25,10 @@ public static class TaskEndpoints
                     t.Priority,
                     t.SuggestedPriority,
                     t.CreatedAt,
-                    CreatedByName= t.CreatedBy.FirstName + " " + t.CreatedBy.LastName })
+                    t.DueDate,
+                    AssignToName = (t.AssignedTo != null) 
+                    ? t.AssignedTo.FirstName + " " + t.AssignedTo.LastName : null,
+                    CreatedByName = t.CreatedBy.FirstName + " " + t.CreatedBy.LastName })
                 .ToListAsync();
 
             return Results.Ok(users);
