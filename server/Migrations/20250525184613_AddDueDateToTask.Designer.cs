@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TaskManagementApp.Models;
 
@@ -11,9 +12,11 @@ using TaskManagementApp.Models;
 namespace server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250525184613_AddDueDateToTask")]
+    partial class AddDueDateToTask
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -67,14 +70,11 @@ namespace server.Migrations
                     b.Property<int?>("AssignedToId")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("AssignedToId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -113,7 +113,7 @@ namespace server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssignedToId1");
+                    b.HasIndex("AssignedToId");
 
                     b.HasIndex("CreatedById");
 
@@ -149,20 +149,14 @@ namespace server.Migrations
 
             modelBuilder.Entity("TaskManagementApp.Models.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -189,7 +183,7 @@ namespace server.Migrations
                 {
                     b.HasOne("TaskManagementApp.Models.User", "AssignedTo")
                         .WithMany()
-                        .HasForeignKey("AssignedToId1");
+                        .HasForeignKey("AssignedToId");
 
                     b.HasOne("TaskManagementApp.Models.User", "CreatedBy")
                         .WithMany()
