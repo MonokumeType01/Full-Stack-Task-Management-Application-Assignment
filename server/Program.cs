@@ -41,6 +41,7 @@ builder.Services.AddCors();
 
 var app = builder.Build();
 
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -55,13 +56,16 @@ app.UseCors(policy =>
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // register group endpoints
 var authGroup = app.MapGroup("/api/auth");
 var userGroup = app.MapGroup("/api/users");
+var taskGroup = app.MapGroup("/api/tasks");
 
 authGroup.MapAuthEndpoints(builder.Configuration, key);
 userGroup.MapUserEndpoints(builder.Configuration, key);
+taskGroup.MapTaskEndpoints(builder.Configuration, key);
 
 // Example Protected route
 app.MapGet("/protected", () => "Authorized!")
