@@ -16,7 +16,16 @@ public static class TaskEndpoints
         group.MapGet("/", async (AppDbContext db) =>
         {
             var users = await db.Tasks
-                .Select(t => new { t.Id, t.Title, t.Description, t.Status, t.Priority, t.SuggestedPriority, t.CreatedAt, t.CreatedBy })
+                .Include(t => t.CreatedBy)
+                .Select(t => new {
+                    t.Id,
+                    t.Title,
+                    t.Description,
+                    t.Status,
+                    t.Priority,
+                    t.SuggestedPriority,
+                    t.CreatedAt,
+                    CreatedByName= t.CreatedBy.FirstName + " " + t.CreatedBy.LastName })
                 .ToListAsync();
 
             return Results.Ok(users);
@@ -24,6 +33,10 @@ public static class TaskEndpoints
 
         group.MapPost("/", async ([FromBody] Models.Task task, AppDbContext db) =>
         {
+
+            var userExists = await db.Users.AnyAsync(u => u.Id == task.CreatedById);
+            if (!userExists)
+                return Results.BadRequest($"User with ID {task.CreatedById} does not exist.");
            
             db.Tasks.Add(task);
             await db.SaveChangesAsync();
