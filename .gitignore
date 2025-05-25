@@ -1,0 +1,81 @@
+# Node (frontend) specific
+node_modules/
+dist/
+build/
+.env
+.env.*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.vscode/
+.DS_Store
+.pnp
+.pnp.js
+
+
+# testing
+/coverage
+
+# production
+/build
+
+# ASP.NET Core specific
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pdb
+
+# Visual Studio/IDE files
+.vs/
+.vscode/
+*.sln
+*.csproj.user
+
+# ASP.NET environment files
+*.db
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+
+# Build output folders
+publish/
+out/
+wwwroot/
+*.db-shm
+*.db-wal
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.bak
+*.tmp
+
+# Logs
+logs/
+*.log
+
+# Other files
+*.swp
+*.swo
+*.sqlite
+*.sqlite3
+
+
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
