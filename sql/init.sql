@@ -1,0 +1,11 @@
+CREATE DATABASE TaskManagementDb;
+GO
+
+USE TaskManagementDb;
+GO
+
+CREATE TABLE Users (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(100) NOT NULL UNIQUE,
+    Password NVARCHAR(100) NOT NULL
+);
