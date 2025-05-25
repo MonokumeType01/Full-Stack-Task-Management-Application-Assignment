@@ -1,6 +1,6 @@
 import TaskRow from './TaskRow';
 
-export default function TaskTable({ tasks }) {
+export default function TaskTable({ tasks, onViewTask, onEditTask, onDeleteTask  }) {
 
   return (
     <div>
@@ -14,12 +14,18 @@ export default function TaskTable({ tasks }) {
               <th className="py-2 px-4">Priority</th>
               <th className="py-2 px-4">Assignee</th>
               <th className="py-2 px-4">Due Date</th>
+              <th className="py-2 px-4">Created At</th>
               <th className="py-2 px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {tasks.map((task, idx) => (
-              <TaskRow key={idx} task={task} />
+              <TaskRow 
+                key={idx} 
+                task={task} 
+                onViewTask={onViewTask} 
+                onEditTask={onEditTask}
+                onDeleteTask={onDeleteTask}/>
             ))}
           </tbody>
         </table>

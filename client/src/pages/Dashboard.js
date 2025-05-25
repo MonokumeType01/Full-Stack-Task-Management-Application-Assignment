@@ -2,9 +2,56 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CounterCard from '../components/CounterCard';
 import TaskTable from '../components/TaskTable';
+import TaskDetailsModal from "../components/TaskDetailsModal";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [mode, setMode] = useState("");
+
+
+  const handleCreate = () => {
+    setMode("create");
+    setSelectedTask(null);
+    setModalOpen(true);
+  };
+
+  const handleViewTask = (task) => {
+    setMode("view");
+    setSelectedTask(task);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  const handleEditTask = (task) => {
+    setMode("edit");
+    setSelectedTask(task);
+    setModalOpen(true);
+  };
+
+  const handleDeleteTask = (task) => {
+    setSelectedTask(task);
+    setModalOpen(true);
+  };
+
+
+  const handleSaveTask = (taskData) => {
+    if (taskData.id) {
+      console.log("Update task:", taskData);
+      // Call API to update
+    } else {
+      console.log("Create new task:", taskData);
+      // Call API to create
+    }
+    setModalOpen(false);
+  };
+
+  
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -41,8 +88,28 @@ export default function Dashboard() {
 
       {/* Bottom Half: Task Table */}
       <div className="bg-white rounded-2xl shadow-md p-4">
-        <TaskTable tasks={tasks}/>
+        <TaskTable 
+        tasks={tasks} 
+        onViewTask={handleViewTask} 
+        onEditTask={handleEditTask} 
+        onDeleteTask={handleDeleteTask} 
+        />
       </div>
+
+      {modalOpen && (
+        <TaskDetailsModal
+          isOpen={modalOpen}
+          onClose={handleCloseModal}
+          task={selectedTask}
+          onViewTask={handleViewTask}
+          onEditTask={handleEditTask}
+          onSaveTask={handleSaveTask}
+          onCreateTask={handleCreate}
+          mode={mode}
+        />
+       )}
     </div>
+
+    
   );
 }
