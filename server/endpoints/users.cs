@@ -21,7 +21,10 @@ public static class UserEndpoints
                 {
                     u.Id,
                     u.Username,
-                    RoleName = u.Role.Name
+                    u.FirstName,
+                    u.LastName,
+                    RoleName = u.Role.Name,
+                    
                 })
                 .ToListAsync();
 
