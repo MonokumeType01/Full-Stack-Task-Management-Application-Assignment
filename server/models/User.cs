@@ -5,8 +5,11 @@ namespace TaskManagementApp.Models
     public class User
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Username { get; set; } = string.Empty;
+
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public int RoleId { get; set; }
         public Role Role { get; set; } = null!;

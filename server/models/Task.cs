@@ -15,7 +15,7 @@ namespace TaskManagementApp.Models
 
         // Relationships
         [ForeignKey("CreatedById")]
-        public int CreatedById { get; set; }
+        public Guid CreatedById { get; set; }
         public User CreatedBy { get; set; } = null!;
 
         [ForeignKey("AssignedToId")]
