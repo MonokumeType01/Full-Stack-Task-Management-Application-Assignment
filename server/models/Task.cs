@@ -28,8 +28,11 @@ namespace TaskManagementApp.Models
         public int TotalTrackedTime { get; set; } = 0; // In seconds
         public bool TimerActive { get; set; } = false;
         public DateTime? TimerStart { get; set; }
+        public DateTime? DueDate { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        
     }
 }
