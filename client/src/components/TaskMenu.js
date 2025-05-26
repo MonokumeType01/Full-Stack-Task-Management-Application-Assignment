@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 
-export default function TaskMenu({ task, onTaskSelected }) {
+export default function TaskMenu({ task, onTaskSelected,userRole }) {
   const [showMenu, setShowMenu] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const buttonRef = useRef(null);
@@ -45,24 +45,28 @@ export default function TaskMenu({ task, onTaskSelected }) {
               left: position.x,
             }}
           >
-            <button
-              onClick={() => {
-                onTaskSelected("edit", task);
-                setShowMenu(false);
-              }}
-              className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                onTaskSelected("delete", task);
-                setShowMenu(false);
-              }}
-              className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded"
-            >
-              Delete
-            </button>
+            {(userRole === "Admin" || userRole === "Manager") && (
+                <button
+                    onClick={() => {
+                    onTaskSelected("edit", task);
+                    setShowMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                >
+                    Edit
+                </button>
+            )}
+            {(userRole === "Admin" || userRole === "Manager") && (
+                <button
+                onClick={() => {
+                    onTaskSelected("delete", task);
+                    setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded"
+                >
+                Delete
+                </button>
+            )}
             <button
               onClick={() => {
                 onTaskSelected("view", task);
@@ -70,7 +74,7 @@ export default function TaskMenu({ task, onTaskSelected }) {
               }}
               className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
             >
-              View
+              View 
             </button>
           </div>,
           document.body

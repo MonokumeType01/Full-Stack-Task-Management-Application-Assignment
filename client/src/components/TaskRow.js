@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TaskMenu from "./TaskMenu";
 
-export default function TaskRow({ key, task, onTaskSelected }) {
+export default function TaskRow({ key, task, onTaskSelected, userRole }) {
 
   return (
     <tr className="border-t">
@@ -15,6 +15,7 @@ export default function TaskRow({ key, task, onTaskSelected }) {
         <div className="relative inline-block text-left">
           <TaskMenu
           task={task}
+          userRole={userRole}
           onTaskSelected={onTaskSelected}
         />
         </div>

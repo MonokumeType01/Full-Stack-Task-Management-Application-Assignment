@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import CounterCard from '../components/CounterCard';
+import { useNavigate } from "react-router-dom";
 import TaskTable from '../components/TaskTable';
 import TaskDetailsModal from "../components/TaskDetailsModal";
 import ConfirmModal from "../components/ConfirmModal";
@@ -16,6 +17,14 @@ export default function Dashboard() {
   const [taskToDelete, setTaskToDelete] = useState(null);
 
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  const navigate = useNavigate();
+
+  const logout = async () => {
+    await fetch(`${apiUrl}/auth/logout`, { method: "POST" });
+    localStorage.removeItem("token");
+    navigate("/login"); 
+  };
 
   const getUserInfo = () => {
     const token = localStorage.getItem("token");
@@ -33,8 +42,6 @@ export default function Dashboard() {
       }
     }
   };
-
-
 
   const handleTaskType = (modeType, task) => {
     if (modeType!=="delete"){
@@ -163,14 +170,23 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Dashboard {userInfo?.role}</h1>
+
+        <div className="flex gap-4">
           {(userInfo?.role === "Admin" || userInfo?.role === "Manager") && (
             <button
-              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
               onClick={() => handleTaskType("create", null)}
             >
               + New Task
             </button>
           )}
+          <button
+            onClick={logout}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Top Half */}
@@ -190,7 +206,7 @@ export default function Dashboard() {
       <div className="bg-white rounded-2xl shadow-md p-4">
         <TaskTable 
         tasks={tasks} 
-       
+        userRole={userInfo?.role}
         onTaskSelected={handleTaskType}
         />
       </div>
