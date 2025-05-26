@@ -31,6 +31,30 @@ public static class UserEndpoints
             return Results.Ok(users);
         });
 
+
+        group.MapGet("/role", async ([FromQuery] string roleName, AppDbContext db) =>
+        {
+            if (string.IsNullOrEmpty(roleName))
+            {
+                return Results.BadRequest("Role name is required");
+            }
+
+            var users = await db.Users
+                .Include(u => u.Role)
+                .Where(u => u.Role.Name == roleName)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Username,
+                    u.FirstName,
+                    u.LastName
+                })
+                .ToListAsync();
+
+            return Results.Ok(users);
+        });
+
+
         return group;
     }
 }
