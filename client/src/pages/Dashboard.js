@@ -8,6 +8,7 @@ import ConfirmModal from "../components/ConfirmModal";
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [userList, setUserList] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [mode, setMode] = useState("");
@@ -16,16 +17,20 @@ export default function Dashboard() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const getUserId = () => {
+  const getUserInfo = () => {
     const token = localStorage.getItem("token");
-    if (!token) return null;
-    try {
-      const decoded = jwtDecode(token);
-      console.log("Decoded token:", decoded);
-      return decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-    } catch (err) {
-      console.error("Invalid token:", err);
-      return null;
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setUserInfo({
+          userId: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
+          role: decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"],
+          username: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
+        });
+      } catch (err) {
+        console.error("Invalid token:", err);
+        setUserInfo(null);
+      }
     }
   };
 
@@ -75,7 +80,8 @@ export default function Dashboard() {
   const handleSaveTask = async (taskData) => {
     const token = localStorage.getItem("token");
 
-    const userId = getUserId();
+    if (!userInfo) return alert("User info not available. Please log in again.");
+
     try {
       let response;
       if (taskData.id) {
@@ -95,7 +101,7 @@ export default function Dashboard() {
         // Create new task
         const newTask = {
           ...taskData,
-          createdById: userId,
+          createdById: userInfo.userId,
         };
 
         response = await fetch(`${apiUrl}/tasks`, {
@@ -131,7 +137,6 @@ export default function Dashboard() {
     async function fetchUsers() {
       const res = await fetch(`${apiUrl}/users/role?roleName=User`);
       const data = await res.json();
-      console.log(apiUrl)
       setUserList(data); 
     }
 
@@ -149,6 +154,7 @@ export default function Dashboard() {
       }
     };
 
+    getUserInfo();
     fetchUsers();
     fetchTasks();
   }, []);
@@ -156,13 +162,15 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
-          onClick={() => handleTaskType("create", null)}
-        >
-          + New Task
-        </button>
+        <h1 className="text-3xl font-bold">Dashboard {userInfo?.role}</h1>
+          {(userInfo?.role === "Admin" || userInfo?.role === "Manager") && (
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
+              onClick={() => handleTaskType("create", null)}
+            >
+              + New Task
+            </button>
+          )}
       </div>
 
       {/* Top Half */}
