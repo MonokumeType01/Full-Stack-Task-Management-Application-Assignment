@@ -2,8 +2,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TaskManagementApp.Models;
+using TaskManagementApp.Services;
 using TaskManagementApp.Endpoints;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+
+using System.Xml.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +26,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
-{
+{   
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -32,12 +36,33 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = key
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = context =>
+        {
+            var token = context.SecurityToken as JwtSecurityToken;
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            // Resolve the blacklist service from DI
+            var blacklistService = context.HttpContext.RequestServices.GetRequiredService<TokenBlacklistService>();
+
+            // Check if token is blacklisted
+            if (blacklistService.IsTokenBlacklisted(tokenString))
+            {
+                context.Fail("Token is blacklisted.");
+            }
+
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddCors();
+builder.Services.AddSingleton<TokenBlacklistService>();
 
 var app = builder.Build();
 

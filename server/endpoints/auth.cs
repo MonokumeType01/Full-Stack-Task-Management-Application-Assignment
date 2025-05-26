@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskManagementApp.Models;
+using TaskManagementApp.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +35,19 @@ public static class AuthEndpoints
 
             var token = GenerateJwtToken(foundUser.Username, foundUser.Id.ToString(), foundUser.Role?.Name ?? "",config["Jwt:Issuer"]!, config["Jwt:Audience"]!, key);
             return Results.Ok(new { token });
+        });
+
+
+        group.MapPost("/logout", (HttpContext context, TokenBlacklistService blacklistService) =>
+        {
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", "").Trim();
+
+            if (string.IsNullOrWhiteSpace(token))
+                return Results.BadRequest("No token provided");
+
+            blacklistService.BlacklistToken(token);
+
+            return Results.Ok(new { message = "Logged out and token blacklisted" });
         });
 
         return group;
