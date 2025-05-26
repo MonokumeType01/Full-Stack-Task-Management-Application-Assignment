@@ -40,6 +40,13 @@ public static class TaskEndpoints
             var userExists = await db.Users.AnyAsync(u => u.Id == task.CreatedById);
             if (!userExists)
                 return Results.BadRequest($"User with ID {task.CreatedById} does not exist.");
+
+            if (task.AssignedToId.HasValue)
+            {
+                var assignedUserExists = await db.Users.AnyAsync(u => u.Id == task.AssignedToId);
+                if (!assignedUserExists)
+                    return Results.BadRequest($"Assigned User with ID {task.AssignedToId} does not exist.");
+            }
            
             db.Tasks.Add(task);
             await db.SaveChangesAsync();
