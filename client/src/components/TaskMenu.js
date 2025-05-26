@@ -47,7 +47,7 @@ export default function TaskMenu({ task, onTaskSelected }) {
           >
             <button
               onClick={() => {
-                onTaskSelected("edit");
+                onTaskSelected("edit", task);
                 setShowMenu(false);
               }}
               className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
@@ -56,7 +56,7 @@ export default function TaskMenu({ task, onTaskSelected }) {
             </button>
             <button
               onClick={() => {
-                onTaskSelected("delete");
+                onTaskSelected("delete", task);
                 setShowMenu(false);
               }}
               className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded"
@@ -65,7 +65,7 @@ export default function TaskMenu({ task, onTaskSelected }) {
             </button>
             <button
               onClick={() => {
-                onTaskSelected("view");
+                onTaskSelected("view", task);
                 setShowMenu(false);
               }}
               className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
