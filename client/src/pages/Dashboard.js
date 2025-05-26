@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 import CounterCard from '../components/CounterCard';
 import TaskTable from '../components/TaskTable';
 import TaskDetailsModal from "../components/TaskDetailsModal";
@@ -12,6 +12,20 @@ export default function Dashboard() {
   const [mode, setMode] = useState("");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
+
+  const getUserId = () => {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    try {
+      const decoded = jwtDecode(token);
+      console.log("Decoded token:", decoded);
+      return decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+    } catch (err) {
+      console.error("Invalid token:", err);
+      return null;
+    }
+  };
+
 
 
   const handleTaskType = (modeType, task) => {
@@ -57,10 +71,13 @@ export default function Dashboard() {
 
   const handleSaveTask = async (taskData) => {
     const token = localStorage.getItem("token");
+
+    const userId = getUserId();
     try {
       let response;
       if (taskData.id) {
         // Update existing task
+
         response = await fetch(`http://localhost:5005/api/tasks/${taskData.id}`, {
           method: "PATCH", 
           headers: {
@@ -73,13 +90,18 @@ export default function Dashboard() {
         console.log("Task updated successfully");
       } else {
         // Create new task
+        const newTask = {
+          ...taskData,
+          createdById: userId,
+        };
+
         response = await fetch(`http://localhost:5005/api/tasks`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(taskData),
+          body: JSON.stringify(newTask),
         });
         if (!response.ok) throw new Error("Failed to create task");
         console.log("Task created successfully");
@@ -120,7 +142,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
+          onClick={() => handleTaskType("create", null)}
+        >
+          + New Task
+        </button>
+      </div>
 
       {/* Top Half */}
       <div className="grid grid-cols-2 gap-4 mb-6">
