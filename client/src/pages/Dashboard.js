@@ -7,11 +7,14 @@ import ConfirmModal from "../components/ConfirmModal";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [mode, setMode] = useState("");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
+
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   const getUserId = () => {
     const token = localStorage.getItem("token");
@@ -52,7 +55,7 @@ export default function Dashboard() {
   const confirmDeleteTask = async () => {
     if (!taskToDelete) return;
     const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:5005/api/tasks/${taskToDelete.id}`, {
+    const res = await fetch(`${apiUrl}/tasks/${taskToDelete.id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -78,7 +81,7 @@ export default function Dashboard() {
       if (taskData.id) {
         // Update existing task
 
-        response = await fetch(`http://localhost:5005/api/tasks/${taskData.id}`, {
+        response = await fetch(`${apiUrl}/tasks/${taskData.id}`, {
           method: "PATCH", 
           headers: {
             "Content-Type": "application/json",
@@ -95,7 +98,7 @@ export default function Dashboard() {
           createdById: userId,
         };
 
-        response = await fetch(`http://localhost:5005/api/tasks`, {
+        response = await fetch(`${apiUrl}/tasks`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -108,7 +111,7 @@ export default function Dashboard() {
       }
 
       // Refresh task list 
-      const updatedTasks = await fetch("http://localhost:5005/api/tasks", {
+      const updatedTasks = await fetch(`${apiUrl}/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -125,9 +128,17 @@ export default function Dashboard() {
   
 
   useEffect(() => {
+    async function fetchUsers() {
+      const res = await fetch(`${apiUrl}/users/role?roleName=User`);
+      const data = await res.json();
+      console.log(apiUrl)
+      setUserList(data); 
+    }
+
+
     const fetchTasks = async () => {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5005/api/tasks", {
+      const res = await fetch(`${apiUrl}/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -137,6 +148,8 @@ export default function Dashboard() {
         setTasks(data);
       }
     };
+
+    fetchUsers();
     fetchTasks();
   }, []);
 
@@ -179,6 +192,7 @@ export default function Dashboard() {
           isOpen={modalOpen}
           onClose={handleCloseModal}
           task={selectedTask}
+          userList={userList}
           onSaveTask={handleSaveTask}
           mode={mode}
         />

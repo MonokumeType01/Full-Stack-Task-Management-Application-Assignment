@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function TaskDetailsModal({
   task = {},
+  userList = [],
   isOpen,
   onClose,
   onSaveTask,
@@ -121,15 +122,20 @@ export default function TaskDetailsModal({
           </div>
 
           <div>
-            <label className="text-sm text-gray-700">Assign To User ID (optional)</label>
-            <input
-              type="text"
-              value={assignedToId}
+            <label className="text-sm text-gray-700">Assign To</label>
+            <select
+              value={assignedToId || ""}
               onChange={(e) => setAssignedToId(e.target.value)}
               className="border w-full p-2 rounded"
-              placeholder="Enter user ID"
               disabled={isViewMode}
-            />
+            >
+              <option value="">Unassigned</option>
+              {userList.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.firstName} {user.lastName}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
