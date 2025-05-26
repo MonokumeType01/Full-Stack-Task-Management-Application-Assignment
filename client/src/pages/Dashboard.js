@@ -3,19 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import CounterCard from '../components/CounterCard';
 import TaskTable from '../components/TaskTable';
 import TaskDetailsModal from "../components/TaskDetailsModal";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [mode, setMode] = useState("");
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
 
-  const handleTaskType = (modeType) => {
-    if (modeType!="delete"){
+  const handleTaskType = (modeType, task) => {
+    if (modeType!=="delete"){
+      // If not delete
       setMode(modeType);
-      setSelectedTask(null);
+      setSelectedTask(task);
       setModalOpen(true);
+    }else{
+      handleDeleteTask(task);
     }
   };
 
@@ -24,15 +30,74 @@ export default function Dashboard() {
     setSelectedTask(null);
   };
 
-  const handleSaveTask = (taskData) => {
-    if (taskData.id) {
-      console.log("Update task:", taskData);
-      // Call API to update
-    } else {
-      console.log("Create new task:", taskData);
-      // Call API to create
+  const handleDeleteTask = (task) => {
+    setTaskToDelete(task);
+    setConfirmModalOpen(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5005/api/tasks/${taskToDelete.id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      console.log("Deleted:", taskToDelete.id);
+      setTasks(tasks.filter(t => t.id !== taskToDelete.id));
     }
-    setModalOpen(false);
+    setConfirmModalOpen(false);
+    setTaskToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setConfirmModalOpen(false);
+    setTaskToDelete(null);
+  };
+
+  const handleSaveTask = async (taskData) => {
+    const token = localStorage.getItem("token");
+    try {
+      let response;
+      if (taskData.id) {
+        // Update existing task
+        response = await fetch(`http://localhost:5005/api/tasks/${taskData.id}`, {
+          method: "PATCH", 
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(taskData),
+        });
+        if (!response.ok) throw new Error("Failed to update task");
+        console.log("Task updated successfully");
+      } else {
+        // Create new task
+        response = await fetch(`http://localhost:5005/api/tasks`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(taskData),
+        });
+        if (!response.ok) throw new Error("Failed to create task");
+        console.log("Task created successfully");
+      }
+
+      // Refresh task list 
+      const updatedTasks = await fetch("http://localhost:5005/api/tasks", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((res) => res.json());
+      setTasks(updatedTasks);
+
+      setModalOpen(false);
+    } catch (error) {
+      console.error("Error saving task:", error);
+      alert(error.message);
+    }
   };
 
   
@@ -88,6 +153,15 @@ export default function Dashboard() {
           mode={mode}
         />
        )}
+
+
+       <ConfirmModal
+          isOpen={confirmModalOpen}
+          title={`Delete task: ${tasks.title}`}
+          message="Are you sure you want to delete this task? This action cannot be undone."
+          onConfirm={confirmDeleteTask}
+          onCancel={cancelDelete}
+        />
     </div>
 
     
