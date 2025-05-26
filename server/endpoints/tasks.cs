@@ -46,7 +46,7 @@ public static class TaskEndpoints
             return Results.Ok("Task Created");
         });
 
-        group.MapPut("/{id}", async (int id, [FromBody] TaskDto updatedTask, AppDbContext db) =>
+        group.MapPatch("/{id}", async (Guid id, [FromBody] TaskDto updatedTask, AppDbContext db) =>
         {
             var task = await db.Tasks.FindAsync(id);
             if (task is null)
@@ -73,7 +73,7 @@ public static class TaskEndpoints
             return Results.Ok("Task updated successfully");
         });
 
-        group.MapDelete("/{id}", async (int id, AppDbContext db) =>
+        group.MapDelete("/{id}", async (Guid id, AppDbContext db) =>
         {
             var task = await db.Tasks.FindAsync(id);
             if (task is null)
