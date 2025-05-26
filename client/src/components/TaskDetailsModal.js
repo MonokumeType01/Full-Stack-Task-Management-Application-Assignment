@@ -11,6 +11,8 @@ export default function TaskDetailsModal({
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("Not Started");
   const [priority, setPriority] = useState("Low");
+  const [dueDate, setDueDate] = useState(""); // New: Due Date
+  const [assignedToId, setAssignedToId] = useState(""); // New: Assigned User ID
 
   const isViewMode = mode === "view";
 
@@ -20,16 +22,28 @@ export default function TaskDetailsModal({
       setDescription(task.description || "");
       setStatus(task.status || "Not Started");
       setPriority(task.priority || "Low");
+      setDueDate(task.dueDate ? task.dueDate.split("T")[0] : ""); // Format for input[type=date]
+      setAssignedToId(task.assignedToId || "");
     } else {
       setTitle("");
       setDescription("");
       setStatus("Not Started");
       setPriority("Low");
+      setDueDate("");
+      setAssignedToId("");
     }
   }, [task]);
 
   const handleSave = () => {
-    const newTask = { ...task, title, description, status, priority };
+    const newTask = {
+      ...task,
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : null, // Convert to ISO format
+      assignedToId: assignedToId || null, // Send null if empty
+    };
     onSaveTask(newTask);
     onClose();
   };
@@ -93,6 +107,29 @@ export default function TaskDetailsModal({
               <option value="Medium">Medium</option>
               <option value="High">High</option>
             </select>
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-700">Due Date (optional)</label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="border w-full p-2 rounded"
+              disabled={isViewMode}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-700">Assign To User ID (optional)</label>
+            <input
+              type="text"
+              value={assignedToId}
+              onChange={(e) => setAssignedToId(e.target.value)}
+              className="border w-full p-2 rounded"
+              placeholder="Enter user ID"
+              disabled={isViewMode}
+            />
           </div>
         </div>
 
