@@ -30,22 +30,30 @@ public static class AuthEndpoints
             if (foundUser is null)
                 return Results.Unauthorized();
 
-            var token = GenerateJwtToken(user.Username, config["Jwt:Issuer"]!, config["Jwt:Audience"]!, key);
+
+            var token = GenerateJwtToken(foundUser.Username, foundUser.Id.ToString(), config["Jwt:Issuer"]!, config["Jwt:Audience"]!, key);
             return Results.Ok(new { token });
         });
 
         return group;
     }
 
-    private static string GenerateJwtToken(string username, string issuer, string audience, SymmetricSecurityKey key)
+    private static string GenerateJwtToken(string username, string userId, string issuer, string audience, SymmetricSecurityKey key)
     {
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Name, username),
+            new Claim(ClaimTypes.NameIdentifier, userId)
+        };
+
         var token = new JwtSecurityToken(
             issuer,
             audience,
-            claims: new[] { new Claim(ClaimTypes.Name, username) },
+            claims: claims,
             expires: DateTime.Now.AddHours(1),
-            signingCredentials: creds);
+            signingCredentials: creds
+        );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
