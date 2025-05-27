@@ -147,8 +147,11 @@ export default function Dashboard() {
   
 
   useEffect(() => {
+
     async function fetchUsers() {
-      const res = await fetch(`${apiUrl}/users/role?roleName=User`);
+      const token = localStorage.getItem("token"); 
+
+      const res = await fetch(`${apiUrl}/users/role?roleName=User`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setUserList(data); 
     }
