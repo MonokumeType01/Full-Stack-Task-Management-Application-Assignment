@@ -23,7 +23,7 @@ public static class AuthEndpoints
             return Results.Ok("User registered");
         });
 
-        group.MapPost("/login", async ([FromBody] Models.User user, AppDbContext db) =>
+        group.MapPost("/login", async ([FromBody] User user, AppDbContext db) =>
         {
             var foundUser = await db.Users
                 .Include(u => u.Role)
@@ -40,7 +40,8 @@ public static class AuthEndpoints
 
         group.MapPost("/logout", (HttpContext context, TokenBlacklistService blacklistService) =>
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", "").Trim();
+            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+            var token = authHeader?.Replace("Bearer ", "").Trim();
 
             if (string.IsNullOrWhiteSpace(token))
                 return Results.BadRequest("No token provided");

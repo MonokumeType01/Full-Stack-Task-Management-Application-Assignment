@@ -41,21 +41,49 @@ builder.Services.AddAuthentication(options =>
     {
         OnTokenValidated = context =>
         {
-            var token = context.SecurityToken as JwtSecurityToken;
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            Console.WriteLine("Token validated: " + context.SecurityToken);
+            var rawToken = context.Request.Headers["Authorization"]
+                .FirstOrDefault()?
+                .Replace("Bearer ", "")
+                .Trim();
 
-            // Resolve the blacklist service from DI
-            var blacklistService = context.HttpContext.RequestServices.GetRequiredService<TokenBlacklistService>();
-
-            // Check if token is blacklisted
-            if (blacklistService.IsTokenBlacklisted(tokenString))
+            if (string.IsNullOrWhiteSpace(rawToken))
             {
-                context.Fail("Token is blacklisted.");
+                context.Fail("Invalid token.");
+                return System.Threading.Tasks.Task.CompletedTask;
             }
 
+            var blacklistService = context.HttpContext.RequestServices.GetRequiredService<TokenBlacklistService>();
+            Console.WriteLine("Checking blacklist for token: " + rawToken);
+
+            if (blacklistService.IsTokenBlacklisted(rawToken))
+            {
+                Console.WriteLine("Token is blacklisted!");
+                context.Fail("This token has been revoked.");
+                return System.Threading.Tasks.Task.CompletedTask;
+            }
+
+            Console.WriteLine("Token is valid and not blacklisted.");
+            return System.Threading.Tasks.Task.CompletedTask;
+        },
+
+        OnChallenge = context =>
+        {
+            if (!context.Response.HasStarted)
+            {
+                Console.WriteLine("OnChallenge triggered - sending 401 Unauthorized.");
+                context.HandleResponse(); // Prevents the default 403 response
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var errorResponse = new { error = context.ErrorDescription ?? "Unauthorized: Invalid or blacklisted token" };
+                return context.Response.WriteAsJsonAsync(errorResponse);
+            }
             return System.Threading.Tasks.Task.CompletedTask;
         }
+
+        
     };
+
 });
 
 builder.Services.AddAuthorization();
@@ -85,8 +113,8 @@ app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // register group endpoints
 var authGroup = app.MapGroup("/api/auth");
-var userGroup = app.MapGroup("/api/users");
-var taskGroup = app.MapGroup("/api/tasks");
+var userGroup = app.MapGroup("/api/users").RequireAuthorization();
+var taskGroup = app.MapGroup("/api/tasks").RequireAuthorization();
 
 authGroup.MapAuthEndpoints(builder.Configuration, key);
 userGroup.MapUserEndpoints(builder.Configuration, key);
