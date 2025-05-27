@@ -21,9 +21,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const logout = async () => {
-    await fetch(`${apiUrl}/auth/logout`, { method: "POST" });
+    const token = localStorage.getItem("token"); 
+    await fetch(`${apiUrl}/auth/logout`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     localStorage.removeItem("token");
-    navigate("/login"); 
+    navigate("/login");
   };
 
   const getUserInfo = () => {
