@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import TaskTable from '../components/TaskTable';
 import TaskDetailsModal from "../components/TaskDetailsModal";
 import ConfirmModal from "../components/ConfirmModal";
+import axios from 'axios';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -22,12 +23,17 @@ export default function Dashboard() {
 
   const logout = async () => {
     const token = localStorage.getItem("token"); 
-    await fetch(`${apiUrl}/auth/logout`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try{
+      await axios.post(`${apiUrl}/auth/logout`, null,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }catch(err){
+      console.error("Logout failed:", err);
+      throw err; 
+    }
+
     localStorage.removeItem("token");
     navigate("/login");
   };
@@ -73,14 +79,19 @@ export default function Dashboard() {
   const confirmDeleteTask = async () => {
     if (!taskToDelete) return;
     const token = localStorage.getItem("token");
-    const res = await fetch(`${apiUrl}/tasks/${taskToDelete.id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      console.log("Deleted:", taskToDelete.id);
-      setTasks(tasks.filter(t => t.id !== taskToDelete.id));
+    try{
+      await axios.delete(`${apiUrl}/tasks/${taskToDelete.id}`,{
+        headers: { Authorization: `Bearer ${token}` },
+      });
+     
+    }catch(err){
+      console.log("Error Deleting Task:", err);
+      throw err; 
     }
+
+    console.log("Deleted:", taskToDelete.id);
+    setTasks(tasks.filter(t => t.id !== taskToDelete.id));
+    
     setConfirmModalOpen(false);
     setTaskToDelete(null);
   };
@@ -96,50 +107,42 @@ export default function Dashboard() {
     if (!userInfo) return alert("User info not available. Please log in again.");
 
     try {
-      let response;
       if (taskData.id) {
         // Update existing task
-
-        response = await fetch(`${apiUrl}/tasks/${taskData.id}`, {
-          method: "PATCH", 
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(taskData),
-        });
-        if (!response.ok) throw new Error("Failed to update task");
-        console.log("Task updated successfully");
+        
+          await axios.patch(`${apiUrl}/tasks/${taskData.id}`, taskData, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          console.log("Task updated successfully");
+        
       } else {
         // Create new task
         const newTask = {
           ...taskData,
           createdById: userInfo.userId,
         };
-
-        response = await fetch(`${apiUrl}/tasks`, {
-          method: "POST",
+          await axios.post(`${apiUrl}/tasks`, newTask,{
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(newTask),
         });
-        if (!response.ok) throw new Error("Failed to create task");
-        console.log("Task created successfully");
+          console.log("Task created successfully");
+        
       }
 
       // Refresh task list 
-      const updatedTasks = await fetch(`${apiUrl}/tasks`, {
+      const updatedTasks = await axios.get(`${apiUrl}/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }).then((res) => res.json());
+      }).then((res) => res.data);
       setTasks(updatedTasks);
 
       setModalOpen(false);
     } catch (error) {
-      console.error("Error saving task:", error);
+      console.error("Error updating/creating task:", error);
       alert(error.message);
     }
   };
@@ -150,24 +153,31 @@ export default function Dashboard() {
 
     async function fetchUsers() {
       const token = localStorage.getItem("token"); 
-
-      const res = await fetch(`${apiUrl}/users/role?roleName=User`, { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      setUserList(data); 
+      try{
+        const res = await axios.get(`${apiUrl}/users/role?roleName=User`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        setUserList(res.data); 
+      }catch(err){
+        console.error("Error fetching users:", err);
+        alert("Failed to load users. Please try again later.");
+      }
+      
     }
 
 
     const fetchTasks = async () => {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${apiUrl}/tasks`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      try{
+        const res = await axios.get(`${apiUrl}/tasks`, {
+        headers: { Authorization: `Bearer ${token}`},
       });
-      if (res.ok) {
-        const data = await res.json();
-        setTasks(data);
+        setTasks(res.data);
+      }catch(err){
+        console.error("Error fetching tasks:", err);
+        alert("Failed to load tasks. Please try again later.");
       }
+      
     };
 
     getUserInfo();

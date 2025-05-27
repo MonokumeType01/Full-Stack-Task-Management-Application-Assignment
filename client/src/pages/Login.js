@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from "axios";
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -17,22 +18,21 @@ export default function Login() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch(`${apiUrl}/auth/login`, {
-        method: 'POST',
+      const res = await axios.post(`${apiUrl}/auth/login`, form, {
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setToken(data.token);
-        localStorage.setItem("token", data.token);
-        navigate('/dashboard');
-      } else {
-        setError('Invalid username or password');
-      }
+      const data = res.data;
+      setToken(data.token);
+      localStorage.setItem("token", data.token);
+      navigate('/dashboard');
     } catch (err) {
-      setError('Error connecting to server');
+      console.error(err);
+      if (err.response && err.response.status === 401) {
+        setError('Invalid username or password');
+      } else {
+        setError('Error connecting to server');
+      }
     }
   };
 
