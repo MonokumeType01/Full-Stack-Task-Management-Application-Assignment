@@ -10,6 +10,8 @@ namespace TaskManagementApp.Models
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Role> Roles { get; set; }
 
+        public DbSet<TimeLog> TimeLogs { get; set; }
+
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
