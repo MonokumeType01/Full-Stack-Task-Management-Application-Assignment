@@ -12,9 +12,11 @@ export default function TaskTable({ tasks, onTaskSelected, userRole  }) {
               <th className="py-2 px-4">Task Name</th>
               <th className="py-2 px-4">Status</th>
               <th className="py-2 px-4">Priority</th>
+              <th className="py-2 px-4">Suggested Priority</th>
               <th className="py-2 px-4">Assignee</th>
               <th className="py-2 px-4">Due Date</th>
               <th className="py-2 px-4">Created At</th>
+              <th className="py-2 px-4">Time Spent</th>
               <th className="py-2 px-4">Actions</th>
             </tr>
           </thead>
