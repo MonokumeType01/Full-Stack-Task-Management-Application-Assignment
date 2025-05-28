@@ -17,7 +17,8 @@ public static class TaskEndpoints
         {
             var users = await db.Tasks
                 .Include(t => t.CreatedBy)
-                .Select(t => new {
+                .Select(t => new
+                {
                     t.Id,
                     t.Title,
                     t.Description,
@@ -26,9 +27,14 @@ public static class TaskEndpoints
                     t.SuggestedPriority,
                     t.CreatedAt,
                     t.DueDate,
-                    AssignToName = (t.AssignedTo != null) 
+                    Duration = (t.TimeLogs != null) ? t.TimeLogs.Sum(log => log.Duration ?? 0) : 0,
+                    IsRunning = t.TimeLogs.Any(log => log.EndTime == null),
+                    t.AssignedToId,
+                    AssignToName = (t.AssignedTo != null)
                     ? t.AssignedTo.FirstName + " " + t.AssignedTo.LastName : null,
-                    CreatedByName = t.CreatedBy.FirstName + " " + t.CreatedBy.LastName })
+                    CreatedByName = t.CreatedBy.FirstName + " " + t.CreatedBy.LastName
+                })
+                    
                 .ToListAsync();
 
             return Results.Ok(users);
@@ -91,7 +97,80 @@ public static class TaskEndpoints
             return Results.Ok("Task deleted successfully");
         });
 
+        // Time tracker end points below
 
+        group.MapPost("/{id}/start-timer", async (Guid id, AppDbContext db) =>
+        {
+            var task = await db.Tasks.FindAsync(id);
+            if (task == null)
+                return Results.NotFound("Task not found.");
+            
+            var activeLog = await db.TimeLogs.FirstOrDefaultAsync(t => t.TaskId == id && t.EndTime == null);
+            if (activeLog != null)
+                return Results.BadRequest("Timer is already running for this task.");
+
+            var newLog = new TimeLog{
+                TaskId = id,
+                StartTime = DateTime.UtcNow
+            };
+
+            db.TimeLogs.Add(newLog);
+            task.Status = "In Progress";
+
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = "Timer started.", startTime = newLog.StartTime });
+        });
+
+
+        group.MapPost("/{id}/stop-timer", async (Guid id, AppDbContext db) =>
+        {
+            var task = await db.Tasks.FindAsync(id);
+            if (task == null)
+                return Results.NotFound("Task not found.");
+
+            var activeLog = await db.TimeLogs.FirstOrDefaultAsync(t => t.TaskId == id && t.EndTime == null);
+            if (activeLog == null)
+                return Results.BadRequest("No active timer found for this task.");
+
+            activeLog.EndTime = DateTime.UtcNow;
+            activeLog.Duration = (int)(activeLog.EndTime.Value - activeLog.StartTime).TotalSeconds;
+
+            await db.SaveChangesAsync();
+            return Results.Ok("Timer stopped and time logged.");
+        });
+
+        group.MapPost("/{id}/log-time", async (Guid id, [FromBody] int minutes, AppDbContext db) =>
+        {
+            var task = await db.Tasks.FindAsync(id);
+            if (task == null)
+                return Results.NotFound("Task not found.");
+
+            var log = new TimeLog
+            {
+                TaskId = id,
+                StartTime = DateTime.UtcNow.AddMinutes(-minutes),
+                EndTime = DateTime.UtcNow,
+                Duration = minutes * 60
+            };
+
+            db.TimeLogs.Add(log);
+            await db.SaveChangesAsync();
+            return Results.Ok("Manual time log added.");
+        });
+
+        group.MapGet("/{id}/time-tracking", async (Guid id, AppDbContext db) =>
+        {
+            var task = await db.Tasks.FindAsync(id);
+            if (task == null)
+                return Results.NotFound("Task not found.");
+
+            var totalSeconds = await db.TimeLogs
+                .Where(t => t.TaskId == id && t.Duration.HasValue)
+                .SumAsync(t => t.Duration!.Value);
+
+            return Results.Ok(new { TaskId = id, TotalTimeInSeconds = totalSeconds });
+        });
 
 
         return group;
