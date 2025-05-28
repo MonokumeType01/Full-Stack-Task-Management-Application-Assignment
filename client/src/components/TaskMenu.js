@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
+import {ROLES} from "../utils/constants";
 
 export default function TaskMenu({ task, onTaskSelected,userRole }) {
   const [showMenu, setShowMenu] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const buttonRef = useRef(null);
+
+  const isAdminOrManager = userRole === ROLES.ADMIN || userRole === ROLES.MANAGER;
 
   const toggleMenu = () => {
     const rect = buttonRef.current.getBoundingClientRect();
@@ -45,7 +48,7 @@ export default function TaskMenu({ task, onTaskSelected,userRole }) {
               left: position.x,
             }}
           >
-            {(userRole === "Admin" || userRole === "Manager") && (
+            {(isAdminOrManager) && (
                 <button
                     onClick={() => {
                     onTaskSelected("edit", task);
@@ -56,7 +59,7 @@ export default function TaskMenu({ task, onTaskSelected,userRole }) {
                     Edit
                 </button>
             )}
-            {(userRole === "Admin" || userRole === "Manager") && (
+            {(isAdminOrManager) && (
                 <button
                 onClick={() => {
                     onTaskSelected("delete", task);

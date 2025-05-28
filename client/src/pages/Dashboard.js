@@ -4,6 +4,7 @@ import CounterCard from '../components/CounterCard';
 import { useNavigate } from "react-router-dom";
 import TaskTable from '../components/TaskTable';
 import TaskDetailsModal from "../components/TaskDetailsModal";
+import {ROLES} from "../utils/constants";
 import ConfirmModal from "../components/ConfirmModal";
 import axios from 'axios';
 
@@ -18,6 +19,12 @@ export default function Dashboard() {
   const [taskToDelete, setTaskToDelete] = useState(null);
 
   const apiUrl = process.env.REACT_APP_API_URL;
+  const isAdmin = userInfo?.role === ROLES.ADMIN;
+  const isManager = userInfo?.role === ROLES.MANAGER;
+  const isUser = userInfo?.role === ROLES.USER;
+  const isAdminOrManager = isAdmin || isManager;
+  const filteredTasks = isUser ? 
+    tasks.filter(task => task.assignedToId === userInfo.userId) : tasks;
 
   const navigate = useNavigate();
 
@@ -181,17 +188,19 @@ export default function Dashboard() {
     };
 
     getUserInfo();
-    fetchUsers();
+    if (isAdminOrManager){
+      fetchUsers();
+    }
     fetchTasks();
   }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Dashboard {userInfo?.role}</h1>
+        <h1 className="text-3xl font-bold">{userInfo?.role} Dashboard</h1>
 
         <div className="flex gap-4">
-          {(userInfo?.role === "Admin" || userInfo?.role === "Manager") && (
+          {(isAdminOrManager) && (
             <button
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
               onClick={() => handleTaskType("create", null)}
@@ -224,7 +233,7 @@ export default function Dashboard() {
       {/* Bottom Half: Task Table */}
       <div className="bg-white rounded-2xl shadow-md p-4">
         <TaskTable 
-        tasks={tasks} 
+        tasks={filteredTasks}
         userRole={userInfo?.role}
         onTaskSelected={handleTaskType}
         />
