@@ -166,7 +166,7 @@ export default function Dashboard() {
     }
 
 
-    const fetchTasks = async () => {
+    async function fetchTasks () {
       const token = localStorage.getItem("token");
       try{
         const res = await axios.get(`${apiUrl}/tasks`, {
