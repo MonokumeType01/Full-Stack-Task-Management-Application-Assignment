@@ -139,7 +139,7 @@ namespace server.Migrations
 
                     b.HasIndex("TaskId");
 
-                    b.ToTable("TimeLog");
+                    b.ToTable("TimeLogs");
                 });
 
             modelBuilder.Entity("TaskManagementApp.Models.User", b =>
