@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TaskManagementApp.Models;
+using TaskManagementApp.Hubs;
 using TaskManagementApp.Services;
 using TaskManagementApp.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
 
 using System.Xml.Serialization;
 
@@ -26,7 +29,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
-{   
+{
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -34,7 +37,8 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = key
+        IssuerSigningKey = key,
+        NameClaimType = ClaimTypes.NameIdentifier
     };
 
     options.Events = new JwtBearerEvents
@@ -81,19 +85,36 @@ builder.Services.AddAuthentication(options =>
             return System.Threading.Tasks.Task.CompletedTask;
         }
 
-        
+
     };
 
 });
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
-builder.Services.AddCors();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // your frontend origin
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // allows cookies, auth headers
+    });
+});
+
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+builder.Services.AddSignalR();
+
 builder.Services.AddSingleton<TokenBlacklistService>();
+
 
 var app = builder.Build();
 
+app.UseCors(MyAllowSpecificOrigins);
 
 if (app.Environment.IsDevelopment())
 {
@@ -101,15 +122,17 @@ if (app.Environment.IsDevelopment())
 }
 
 
-app.UseCors(policy =>
-    policy.AllowAnyOrigin()
-          .AllowAnyMethod()
-          .AllowAnyHeader());
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// register hub
+app.MapHub<TaskHub>("/api/taskhub");
 
 // register group endpoints
 var authGroup = app.MapGroup("/api/auth");
@@ -119,10 +142,6 @@ var taskGroup = app.MapGroup("/api/tasks").RequireAuthorization();
 authGroup.MapAuthEndpoints(builder.Configuration, key);
 userGroup.MapUserEndpoints(builder.Configuration, key);
 taskGroup.MapTaskEndpoints(builder.Configuration, key);
-
-// Example Protected route
-app.MapGet("/protected", () => "Authorized!")
-   .RequireAuthorization(); 
 
 
 app.Run();
