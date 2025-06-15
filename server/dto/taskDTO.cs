@@ -5,4 +5,5 @@ public class TaskDto
     public string? Priority { get; set; }
     public Guid? AssignedToId { get; set; }
     public DateTime? DueDate { get; set; }
+    public int? TimeTakenMinutes { get; set; } 
 }
