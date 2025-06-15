@@ -4,7 +4,8 @@ using TaskManagementApp.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.SignalR;
+using TaskManagementApp.Hubs;
 
 namespace TaskManagementApp.Endpoints;
 
@@ -40,9 +41,8 @@ public static class TaskEndpoints
             return Results.Ok(users);
         });
 
-        group.MapPost("/", async ([FromBody] Models.Task task, AppDbContext db) =>
+        group.MapPost("/", async ([FromBody] Models.Task task, AppDbContext db, IHubContext<TaskHub> hubContext) =>
         {
-
             var userExists = await db.Users.AnyAsync(u => u.Id == task.CreatedById);
             if (!userExists)
                 return Results.BadRequest($"User with ID {task.CreatedById} does not exist.");
@@ -56,10 +56,30 @@ public static class TaskEndpoints
            
             db.Tasks.Add(task);
             await db.SaveChangesAsync();
+            Console.WriteLine("Start notif line:", task.AssignedToId);
+            // notification use
+            if (task.AssignedToId.HasValue)
+            {   
+                var assignedUserId = task.AssignedToId.Value.ToString();
+                Console.WriteLine($"Sending SignalR to user: {assignedUserId}");
+
+                await hubContext.Clients.User(assignedUserId)
+                    .SendAsync("NewTaskAssigned", new
+                    {
+                        task.Id,
+                        task.Title,
+                        task.Description,
+                        task.Priority,
+                        task.Status,
+                        task.DueDate,
+                        task.AssignedToId
+                    });
+            }
+
             return Results.Ok("Task Created");
         });
 
-        group.MapPatch("/{id}", async (Guid id, [FromBody] TaskDto updatedTask, AppDbContext db) =>
+        group.MapPatch("/{id}", async (Guid id, [FromBody] TaskDto updatedTask, AppDbContext db, IHubContext<TaskHub> hubContext) =>
         {
             var task = await db.Tasks.FindAsync(id);
             if (task is null)
@@ -80,9 +100,36 @@ public static class TaskEndpoints
             if (updatedTask.DueDate.HasValue)
                 task.DueDate = updatedTask.DueDate.Value;
 
+            if (updatedTask.TimeTakenMinutes.HasValue && updatedTask.TimeTakenMinutes.Value > 0)
+            {
+                db.TimeLogs.Add(new TimeLog
+                {
+                    TaskId = id,
+                    StartTime = DateTime.UtcNow.AddMinutes(-updatedTask.TimeTakenMinutes.Value),
+                    EndTime = DateTime.UtcNow,
+                    Duration = updatedTask.TimeTakenMinutes.Value * 60
+                });
+            }
+
             task.UpdatedAt = DateTime.UtcNow;
 
             await db.SaveChangesAsync();
+            
+            // notification
+            if (task.AssignedToId.HasValue)
+            {   
+                var assignedUserId = task.AssignedToId.Value.ToString();
+                await hubContext.Clients.User(assignedUserId)
+                    .SendAsync("TaskUpdated", new
+                    {
+                        task.Id,
+                        task.Title,
+                        task.Status,
+                        task.Priority,
+                        task.DueDate
+                    });
+            }
+
             return Results.Ok("Task updated successfully");
         });
 
@@ -171,6 +218,43 @@ public static class TaskEndpoints
 
             return Results.Ok(new { TaskId = id, TotalTimeInSeconds = totalSeconds });
         });
+
+
+        group.MapGet("/count/by-user/{userId}", async (Guid userId, AppDbContext db) =>
+        {
+            var assignedTasks = await db.Tasks
+                .Where(t => t.AssignedToId == userId)
+                .ToListAsync();
+
+            var createdTasks = await db.Tasks
+                .Where(t => t.CreatedById == userId)
+                .ToListAsync();
+
+             var result = new
+            {
+                assigned = new
+                {
+                    total = assignedTasks.Count,
+                    notStarted = assignedTasks.Count(t => t.Status == "Not Started"),
+                    inProgress = assignedTasks.Count(t => t.Status == "In Progress"),
+                    pendingCheck = assignedTasks.Count(t => t.Status == "Pending Check"),
+                    completed = assignedTasks.Count(t => t.Status == "Completed"),
+                    overdue = assignedTasks.Count(t => t.DueDate < DateTime.UtcNow && t.Status != "Completed")
+                },
+                created = new
+                {
+                    total = createdTasks.Count,
+                    notStarted = createdTasks.Count(t => t.Status == "Not Started"),
+                    inProgress = createdTasks.Count(t => t.Status == "In Progress"),
+                    pendingCheck = createdTasks.Count(t => t.Status == "Pending Check"),
+                    completed = createdTasks.Count(t => t.Status == "Completed"),
+                    overdue = createdTasks.Count(t => t.DueDate < DateTime.UtcNow && t.Status != "Completed")
+                }
+            };
+
+            return Results.Ok(result);
+        });
+
 
 
         return group;
