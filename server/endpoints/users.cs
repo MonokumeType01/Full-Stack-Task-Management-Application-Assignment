@@ -31,6 +31,43 @@ public static class UserEndpoints
             return Results.Ok(users);
         });
 
+        group.MapDelete("/{id}", async (Guid id, AppDbContext db) =>
+        {
+            var user = await db.Users.FindAsync(id);
+            if (user == null)
+            {
+                return Results.NotFound("User not found");
+            }
+
+            db.Users.Remove(user);
+            await db.SaveChangesAsync();
+            return Results.Ok("User deleted successfully");
+        });
+
+        group.MapPatch("/{id}", async (Guid id, [FromBody] UpdateUserDto updatedUser, AppDbContext db) =>
+        {
+            var user = await db.Users.FindAsync(id);
+            if (user == null)
+            {
+                return Results.NotFound("User not found");
+            }
+
+            if (!string.IsNullOrEmpty(updatedUser.FirstName))
+                user.FirstName = updatedUser.FirstName;
+
+            if (!string.IsNullOrEmpty(updatedUser.LastName))
+                user.LastName = updatedUser.LastName;
+
+            if (!string.IsNullOrEmpty(updatedUser.Username))
+                user.Username = updatedUser.Username;
+
+            if (updatedUser.RoleId.HasValue)
+                user.RoleId = updatedUser.RoleId.Value;
+
+            await db.SaveChangesAsync();
+            return Results.Ok("User updated successfully");
+        });
+
 
         group.MapGet("/role", async ([FromQuery] string roleName, AppDbContext db) =>
         {
@@ -47,7 +84,8 @@ public static class UserEndpoints
                     u.Id,
                     u.Username,
                     u.FirstName,
-                    u.LastName
+                    u.LastName,
+                    RoleName = u.Role.Name,
                 })
                 .ToListAsync();
 
