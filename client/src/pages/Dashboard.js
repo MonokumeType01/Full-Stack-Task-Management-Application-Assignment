@@ -118,6 +118,8 @@ export default function Dashboard() {
       alert("User registered successfully!");
       setRegisterModalOpen(false);
       setNewUser({ username: "", firstName: "", lastName: "", password: "", roleId: "3" });
+      await fetchUsers();
+      await fetchAllUsers();
     } catch (err) {
       console.error(err);
       alert("Failed to register user.");
@@ -322,10 +324,45 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    
-  }, []);
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/users/role?roleName=User`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      const users = res.data;
 
+      const usersWithCounts = await Promise.all(
+        users.map(async (user) => {
+          const taskCount = await fetchTaskCountStatusSummary(user.id);
+          return { ...user, taskCount };
+        })
+      );
+      setUserList(usersWithCounts); 
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      alert("Failed to load users. Please try again later.");
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/users`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      const allUsers = res.data;
+
+      const allUsersWithCounts = await Promise.all(
+        allUsers.map(async (user) => {
+          const taskCount = await fetchTaskCountStatusSummary(user.id);
+          return { ...user, taskCount };
+        })
+      );
+      setAllUserList(allUsersWithCounts); 
+    } catch (err) {
+      console.error("Error fetching all users:", err);
+      alert("Failed to load all users. Please try again later.");
+    }
+  };
 
   useEffect(() => {
 
@@ -401,56 +438,14 @@ export default function Dashboard() {
   }, [userInfo, token]);
 
   useEffect(() => {
-    async function fetchUsers() {
-      try{
-        const res = await axios.get(`${apiUrl}/users/role?roleName=User`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        });
-        const users = res.data;
+    if (!isAdminOrManager) return;
 
+    const fetchAll = async () => {
+      await fetchUsers();
+      await fetchAllUsers();
+    };
 
-        const usersWithCounts = await Promise.all(
-          users.map(async (user) => {
-            const taskCount = await fetchTaskCountStatusSummary(user.id);
-            return { ...user, taskCount };
-          })
-        );
-        setUserList(usersWithCounts); 
-      }catch(err){
-        console.error("Error fetching users:", err);
-        alert("Failed to load users. Please try again later.");
-      }
-      
-    }
-
-
-    async function fetchAllUsers() {
-      try{
-        const res = await axios.get(`${apiUrl}/users`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        });
-        const allUsers = res.data;
-
-
-        const allUsersWithCounts = await Promise.all(
-          allUsers.map(async (user) => {
-            const taskCount = await fetchTaskCountStatusSummary(user.id);
-            return { ...user, taskCount };
-          })
-        );
-        setAllUserList(allUsersWithCounts); 
-      }catch(err){
-        console.error("Error fetching all users:", err);
-        alert("Failed to load all users. Please try again later.");
-      }
-      
-    }
-
-    if (isAdminOrManager) {
-      fetchUsers();
-      fetchAllUsers();
-    }
-  
+    fetchAll();
   }, [isAdminOrManager]);
 
   return (
