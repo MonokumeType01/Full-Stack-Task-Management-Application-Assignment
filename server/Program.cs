@@ -99,7 +99,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // your frontend origin
+        policy.WithOrigins("http://localhost:3000","https://full-stack-task-management-applicat.vercel.app") // your frontend origin
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // allows cookies, auth headers
@@ -113,6 +113,8 @@ builder.Services.AddSingleton<TokenBlacklistService>();
 
 
 var app = builder.Build();
+
+app.Urls.Add("http://0.0.0.0:" + Environment.GetEnvironmentVariable("PORT") ?? "5000");
 
 app.UseCors(MyAllowSpecificOrigins);
 
